@@ -1,0 +1,15 @@
+# Static assets are served without running the Worker, so they need the
+# cross-origin isolation headers here. Without them, worker scripts and wasm
+# are blocked on the isolated page. src/start.ts sets the same headers on
+# server-rendered pages.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin
+
+# The toolchain and clips: paths carry versions, so a file never changes.
+/tools/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/clips/*
+  Cache-Control: public, max-age=31536000, immutable

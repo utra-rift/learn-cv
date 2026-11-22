@@ -1,0 +1,13 @@
+// The Worker: TanStack Start's server, plus the build's client files as static
+// assets (the Cloudflare Vite plugin adds those). The toolchain and clips in
+// public/tools and public/clips go up as static assets too. Deploy with
+// `bun run deploy`.
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "learn-cv",
+	"account_id": "1d068566b34f167cac6462045382c0ff",
+	"main": "@tanstack/react-start/server-entry",
+	"compatibility_date": "2026-07-08",
+	"compatibility_flags": ["nodejs_compat"],
+	"observability": { "enabled": true }
+}

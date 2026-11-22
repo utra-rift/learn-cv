@@ -1,0 +1,56 @@
+{
+	"name": "cv-workshop",
+	"private": true,
+	"type": "module",
+	"imports": {
+		"#/*": "./src/*"
+	},
+	"scripts": {
+		"predev": "bun scripts/sync-tools.ts",
+		"dev": "vite dev --port 3000",
+		"prebuild": "bun scripts/sync-tools.ts",
+		"build": "vite build",
+		"preview": "vite preview",
+		"deploy": "bun run build && wrangler deploy",
+		"tools": "bun scripts/sync-tools.ts",
+		"clips": "bun scripts/make-clips.ts",
+		"figures": "bun scripts/make-figures.ts",
+		"test": "bun test",
+		"typecheck": "tsc --noEmit",
+		"check": "biome check",
+		"format": "biome format --write",
+		"smoke": "bun scripts/smoke.ts",
+		"smoke:headers": "bun scripts/check-headers.ts"
+	},
+	"dependencies": {
+		"@fontsource-variable/jetbrains-mono": "^5.3.0",
+		"@fontsource-variable/lexend": "^5.3.0",
+		"@tailwindcss/vite": "4.3.3",
+		"@tanstack/react-router": "1.170.41",
+		"@tanstack/react-start": "1.168.60",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"lucide-react": "0.577.0",
+		"lz-string": "1.5.0",
+		"monaco-editor": "0.57.0",
+		"radix-ui": "1.6.7",
+		"react": "19.3.0",
+		"react-dom": "19.3.0",
+		"tailwind-merge": "^3.0.2",
+		"tailwindcss": "4.3.3",
+		"tw-animate-css": "^1.3.6"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.5",
+		"@cloudflare/vite-plugin": "1.70.1",
+		"@types/bun": "latest",
+		"@types/react": "^19.2.0",
+		"@types/react-dom": "^19.2.0",
+		"@vitejs/plugin-react": "6.1.1",
+		"playwright-core": "1.63.0",
+		"pyodide": "314.0.7",
+		"typescript": "6.0.3",
+		"vite": "8.3.1",
+		"wrangler": "4.166.0"
+	}
+}
