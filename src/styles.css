@@ -206,6 +206,16 @@
 	}
 }
 
+/* Shown only on phones and tablets: narrow screens, or touch with no mouse. */
+.mobile-only {
+	display: none;
+}
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+	.mobile-only {
+		display: block;
+	}
+}
+
 /* Learn CV. The brand has no error or warning colour yet; these match Learn PID. */
 :root,
 [data-theme="light"] {

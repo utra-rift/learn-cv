@@ -72,6 +72,10 @@ export const storage = {
 	setInstructor: (on: boolean) => write("instructor", on ? true : undefined),
 
 	/** The Arena (dark) theme, for projectors. */
+	/** The "bring a laptop" banner on phones and tablets, once closed. */
+	isMobileWarningDismissed: (): boolean => read("mobile-warning", false),
+	dismissMobileWarning: () => write("mobile-warning", true),
+
 	isProjector: (): boolean => read("projector", false),
 	setProjector: (on: boolean) => write("projector", on ? true : undefined),
 

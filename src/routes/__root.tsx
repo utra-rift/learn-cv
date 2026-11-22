@@ -5,6 +5,7 @@ import {
 	useRouterState,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { MobileWarning } from "#/components/site/MobileWarning";
 import { storage, useStored } from "#/lib/storage";
 
 import appCss from "../styles.css?url";
@@ -43,6 +44,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<Settings />
+				<MobileWarning />
 				{children}
 				<Scripts />
 			</body>
