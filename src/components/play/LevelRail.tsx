@@ -18,7 +18,7 @@ export function LevelRail({
 	passed,
 	isUnlocked,
 }: LevelRailProps) {
-	const current = useRef<HTMLAnchorElement>(null);
+	const current = useRef<HTMLLIElement>(null);
 	// biome-ignore lint/correctness/useExhaustiveDependencies: scroll the new level into view when it changes
 	useEffect(() => {
 		current.current?.scrollIntoView({ block: "nearest", inline: "center" });
@@ -34,6 +34,8 @@ export function LevelRail({
 					const unlocked = isUnlocked(level);
 					const done = Boolean(passed[level.number]);
 					const active = level.id === currentId;
+					// The navy pill is for the open level; a locked one only gets an outline.
+					const filled = active && unlocked;
 					// The closing demo isn't graded; set it apart.
 					const section = level.clips.length === 0 && i > 0 ? "Demo" : null;
 					const body = (
@@ -41,7 +43,7 @@ export function LevelRail({
 							<span
 								className={cn(
 									"type-data",
-									active ? "text-surface" : "text-ink-muted",
+									filled ? "text-surface" : "text-ink-muted",
 								)}
 							>
 								{String(level.number).padStart(2, "0")}
@@ -53,7 +55,7 @@ export function LevelRail({
 								<Check
 									className={cn(
 										"size-3.5",
-										active ? "text-surface" : "text-cyan",
+										filled ? "text-surface" : "text-cyan",
 									)}
 									aria-label="passed"
 								/>
@@ -62,7 +64,11 @@ export function LevelRail({
 						</>
 					);
 					return (
-						<li key={level.id} className="flex items-center">
+						<li
+							key={level.id}
+							ref={active ? current : undefined}
+							className="flex items-center"
+						>
 							{section && (
 								<span className="mr-1 ml-2 border-l border-line pl-3 type-label text-[11px] text-ink-muted">
 									{section}
@@ -70,7 +76,6 @@ export function LevelRail({
 							)}
 							{unlocked ? (
 								<Link
-									ref={active ? current : undefined}
 									to="/level/$levelId"
 									params={{ levelId: level.id }}
 									aria-current={active ? "page" : undefined}
@@ -83,8 +88,13 @@ export function LevelRail({
 								</Link>
 							) : (
 								<span
+									aria-current={active ? "page" : undefined}
 									title="Pass the level before this one to unlock it."
-									className="flex cursor-not-allowed items-center gap-2 rounded-sm px-2.5 py-1.5 text-ink-muted/60"
+									className={cn(
+										"flex cursor-not-allowed items-center gap-2 rounded-sm px-2.5 py-1.5 text-ink-muted/60",
+										active &&
+											"outline outline-1 -outline-offset-1 outline-line",
+									)}
 								>
 									{body}
 								</span>
