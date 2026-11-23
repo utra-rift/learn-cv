@@ -1,4 +1,6 @@
-import { Check, ChevronRight, Lightbulb, Presentation } from "lucide-react";
+import { Check, ChevronRight, Lightbulb } from "lucide-react";
+import { NotesList } from "#/components/site/NotesList";
+import { PresenterNotes } from "#/components/site/PresenterNotes";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -121,20 +123,9 @@ export function LevelBrief({
 			</div>
 
 			{instructor && level.presenter.length > 0 && (
-				<aside
-					aria-label="Presenter notes"
-					className="flex flex-col gap-2 rounded-sm border border-violet/50 bg-violet-soft p-4"
-				>
-					<span className="flex items-center gap-2 type-label text-violet-text">
-						<Presentation className="size-4" aria-hidden />
-						Presenter notes · {level.minutes} min
-					</span>
-					<ul className="flex list-disc flex-col gap-1.5 pl-5 type-body-sm text-ink marker:text-violet">
-						{level.presenter.map((note) => (
-							<li key={note.slice(0, 32)}>{inline(note)}</li>
-						))}
-					</ul>
-				</aside>
+				<PresenterNotes title={`Presenter notes · ${level.minutes} min`}>
+					<NotesList notes={level.presenter} />
+				</PresenterNotes>
 			)}
 		</section>
 	);

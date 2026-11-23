@@ -71,6 +71,8 @@ interface PlayScreenProps {
 	onFailedCheck?: () => void;
 	/** Replaces the code when `n` changes, such as with the answer. */
 	replacement?: { code: string; n: number } | null;
+	/** Instructor mode: a toggle between the starter and the answer. */
+	instructor?: boolean;
 }
 
 const MAX_LOG_LINES = 400;
@@ -91,6 +93,7 @@ export function PlayScreen({
 	onPassed,
 	onFailedCheck,
 	replacement,
+	instructor = false,
 }: PlayScreenProps) {
 	const runtime = useRuntime();
 	const projector = useStored(storage.isProjector, false);
@@ -333,6 +336,40 @@ export function PlayScreen({
 							<span className="border-b-2 border-cyan px-1 py-1 font-mono text-[12px] text-ink">
 								main.py
 							</span>
+							{instructor && level && (
+								<ToggleGroup
+									type="single"
+									variant="outline"
+									size="sm"
+									// Neither is on once the code's been edited.
+									value={
+										code === level.solution
+											? "answer"
+											: code === starter
+												? "starter"
+												: ""
+									}
+									onValueChange={(value) => {
+										if (value === "answer") replaceCode(level.solution);
+										if (value === "starter") replaceCode(starter);
+									}}
+									aria-label="Instructor: show the starter or the answer"
+									className="ml-2 border-violet/50"
+								>
+									<ToggleGroupItem
+										value="starter"
+										className="h-7 px-2 text-[11px]"
+									>
+										Starter
+									</ToggleGroupItem>
+									<ToggleGroupItem
+										value="answer"
+										className="h-7 px-2 text-[11px] data-[state=on]:bg-violet data-[state=on]:text-on-violet"
+									>
+										Answer
+									</ToggleGroupItem>
+								</ToggleGroup>
+							)}
 							<div className="ml-auto flex flex-wrap items-center gap-1">
 								{previousCode && previousCode !== code && (
 									<Tooltip>

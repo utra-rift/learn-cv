@@ -91,7 +91,9 @@ export function DevTools() {
 
 function DevPanel() {
 	const unlockId = useId();
+	const notesId = useId();
 	const instructor = useStored(storage.isInstructor, false);
+	const notesHidden = useStored(storage.areNotesHidden, false);
 	const progress = useStored(storage.getProgress, {});
 	const passed = LEVELS.filter((level) => progress[level.number]).length;
 
@@ -134,6 +136,25 @@ function DevPanel() {
 					<span className="type-body-sm text-[12px] text-ink-muted">
 						Also shows the Answer button and presenter notes. Same as{" "}
 						<code className="type-data text-[11px]">?instructor=1</code>.
+					</span>
+				</label>
+			</div>
+
+			<div className="flex items-start gap-3">
+				<Switch
+					id={notesId}
+					checked={!notesHidden}
+					onCheckedChange={(checked) => storage.setNotesHidden(!checked)}
+					className="mt-0.5"
+				/>
+				<label
+					htmlFor={notesId}
+					className="flex cursor-pointer flex-col gap-0.5"
+				>
+					<span className="type-body-sm text-ink">Show presenter notes</span>
+					<span className="type-body-sm text-[12px] text-ink-muted">
+						The notes on each level and the run sheet. Turn off to share your
+						screen without them, or pop them into their own window.
 					</span>
 				</label>
 			</div>

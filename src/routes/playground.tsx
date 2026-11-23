@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { PlayScreen } from "#/components/play/PlayScreen";
 import { SiteHeader } from "#/components/site/SiteHeader";
 import { PLAYGROUND_STARTER } from "#/levels";
 import { inline } from "#/lib/rich-text";
+import { storage } from "#/lib/storage";
 
 export const Route = createFileRoute("/playground")({
 	ssr: false,
@@ -18,6 +20,8 @@ const NOTES = [
 ];
 
 function Playground() {
+	// No level open: the presenter notes window shows the run sheet.
+	useEffect(() => storage.setNotesLevel(null), []);
 	return (
 		<div className="flex min-h-screen flex-col">
 			<SiteHeader />

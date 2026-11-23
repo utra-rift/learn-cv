@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NotesRouteImport } from './routes/notes'
 import { Route as PlaygroundRouteImport } from './routes/playground'
 import { Route as LevelLevelIdRouteImport } from './routes/level.$levelId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesRoute = NotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlaygroundRoute = PlaygroundRouteImport.update({
@@ -31,30 +37,34 @@ const LevelLevelIdRoute = LevelLevelIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/notes': typeof NotesRoute
   '/playground': typeof PlaygroundRoute
   '/level/$levelId': typeof LevelLevelIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/notes': typeof NotesRoute
   '/playground': typeof PlaygroundRoute
   '/level/$levelId': typeof LevelLevelIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/notes': typeof NotesRoute
   '/playground': typeof PlaygroundRoute
   '/level/$levelId': typeof LevelLevelIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/playground' | '/level/$levelId'
+  fullPaths: '/' | '/notes' | '/playground' | '/level/$levelId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/playground' | '/level/$levelId'
-  id: '__root__' | '/' | '/playground' | '/level/$levelId'
+  to: '/' | '/notes' | '/playground' | '/level/$levelId'
+  id: '__root__' | '/' | '/notes' | '/playground' | '/level/$levelId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  NotesRoute: typeof NotesRoute
   PlaygroundRoute: typeof PlaygroundRoute
   LevelLevelIdRoute: typeof LevelLevelIdRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notes': {
+      id: '/notes'
+      path: '/notes'
+      fullPath: '/notes'
+      preLoaderRoute: typeof NotesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/playground': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  NotesRoute: NotesRoute,
   PlaygroundRoute: PlaygroundRoute,
   LevelLevelIdRoute: LevelLevelIdRoute,
 }

@@ -45,12 +45,25 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<Settings />
-				<MobileWarning />
-				{children}
-				<DevTools />
+				<SiteChrome>{children}</SiteChrome>
 				<Scripts />
 			</body>
 		</html>
+	);
+}
+
+/** The banner and dev tools, except in the presenter notes window. */
+function SiteChrome({ children }: { children: React.ReactNode }) {
+	const notesWindow = useRouterState({
+		select: (s) => s.location.pathname === "/notes",
+	});
+	if (notesWindow) return children;
+	return (
+		<>
+			<MobileWarning />
+			{children}
+			<DevTools />
+		</>
 	);
 }
 

@@ -71,6 +71,22 @@ export const storage = {
 	isInstructor: (): boolean => read("instructor", false),
 	setInstructor: (on: boolean) => write("instructor", on ? true : undefined),
 
+	/** Instructor mode without the presenter notes and run sheet, for screen sharing. */
+	areNotesHidden: (): boolean => read("hide-notes", false),
+	setNotesHidden: (on: boolean) => write("hide-notes", on ? true : undefined),
+
+	/** Whether the presenter notes are open in their own window. */
+	isNotesWindowOpen: (): boolean => read("notes-window", false),
+	setNotesWindowOpen: (on: boolean) =>
+		write("notes-window", on ? true : undefined),
+
+	/**
+	 * The level open in the main tab, so the notes window can follow it. Null
+	 * on other pages, where the notes window shows the run sheet.
+	 */
+	getNotesLevel: (): string | null => read("notes-level", null),
+	setNotesLevel: (id: string | null) => write("notes-level", id ?? undefined),
+
 	/** The "bring a laptop" banner on phones and tablets, once closed. */
 	isMobileWarningDismissed: (): boolean => read("mobile-warning", false),
 	dismissMobileWarning: () => write("mobile-warning", true),

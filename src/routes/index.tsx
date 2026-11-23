@@ -5,10 +5,11 @@ import {
 	CircleCheck,
 	Download,
 	LoaderCircle,
-	Presentation,
 	ShieldCheck,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { RunSheet } from "#/components/site/NotesList";
+import { PresenterNotes } from "#/components/site/PresenterNotes";
 import { SiteHeader } from "#/components/site/SiteHeader";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -24,42 +25,9 @@ export const Route = createFileRoute("/")({
 	component: Home,
 });
 
-const RUN_SHEET = [
-	[
-		"0:00",
-		"Setup",
-		"Everyone opens the site, checks the camera and downloads. Hand out tennis balls and sticky notes.",
-	],
-	[
-		"0:05",
-		"Level 1 · Camera on",
-		"The read-show-wait loop. Read the comments together on the projector.",
-	],
-	[
-		"0:09",
-		"Level 2 · Pixels",
-		"Frames are NumPy arrays: [y, x], slices, mean. Everyone finds their object's hue.",
-	],
-	[
-		"0:15",
-		"Level 3 · See it",
-		"HSV and inRange. Live-code steps 2 to 4, then let them tune.",
-	],
-	["0:22", "Level 4 · Find it", "Morphology, contours, the size check."],
-	[
-		"0:31",
-		"Level 5 · Track it",
-		"Predict and update. The longest one: go step by step on the projector.",
-	],
-	[
-		"0:45",
-		"Level 6 · Count fingers",
-		"Background difference, hull and defects.",
-	],
-	["0:54", "Armor plates", "The closing demo, and what's next. Ends at 0:58."],
-] as const;
-
 function Home() {
+	// No level open: the presenter notes window shows the run sheet.
+	useEffect(() => storage.setNotesLevel(null), []);
 	const progress = useStored(storage.getProgress, {});
 	const instructor = useStored(storage.isInstructor, false);
 	const downloaded = useStored(storage.isDownloaded, false);
@@ -155,40 +123,18 @@ function Home() {
 				</section>
 
 				{instructor && (
-					<section
-						aria-labelledby="run-sheet"
-						className="flex flex-col gap-4 rounded-md border border-violet/50 bg-violet-soft p-5"
-					>
-						<h2
-							id="run-sheet"
-							className="flex items-center gap-2 type-label text-violet-text"
-						>
-							<Presentation className="size-4" aria-hidden />
-							Presenter run sheet
-						</h2>
-						<ol className="flex flex-col gap-2">
-							{RUN_SHEET.map(([time, title, note]) => (
-								<li
-									key={time}
-									className="grid grid-cols-[3.5rem_10rem_1fr] gap-3 max-sm:grid-cols-[3.5rem_1fr]"
-								>
-									<span className="type-data text-ink">{time}</span>
-									<span className="type-label text-ink">{title}</span>
-									<span className="type-body-sm text-ink-muted max-sm:col-start-2">
-										{note}
-									</span>
-								</li>
-							))}
-						</ol>
+					<PresenterNotes title="Presenter run sheet" className="gap-4 p-5">
+						<RunSheet />
 						<p className="type-body-sm text-ink-muted">
 							Every level has presenter notes and the answer while instructor
-							mode is on. Use the moon button (or{" "}
+							mode is on. Pop the notes out to keep them off a screen share. Use
+							the moon button (or{" "}
 							<code className="font-mono">?projector=1</code>) for the Arena
 							theme on the projector, and click any window to show it
 							fullscreen. <code className="font-mono">?instructor=0</code> turns
 							this off.
 						</p>
-					</section>
+					</PresenterNotes>
 				)}
 
 				<footer className="mt-auto flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6 type-body-sm text-ink-muted">

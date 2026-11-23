@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { LevelBrief } from "#/components/play/LevelBrief";
 import { LevelRail } from "#/components/play/LevelRail";
 import { PlayScreen } from "#/components/play/PlayScreen";
@@ -48,6 +48,9 @@ function LevelPage() {
 	const instructor = useStored(storage.isInstructor, false);
 	const progress = useStored(storage.getProgress, {});
 	const skipped = useStored(storage.getSkipped, []);
+
+	// The presenter notes window follows the level open here.
+	useEffect(() => storage.setNotesLevel(level.id), [level.id]);
 
 	const isUnlocked = useCallback(
 		(l: Level) =>
@@ -125,6 +128,7 @@ function LevelPage() {
 					}}
 					onFailedCheck={() => setFailedChecks((n) => n + 1)}
 					replacement={replacement}
+					instructor={instructor}
 					brief={
 						<LevelBrief
 							level={level}
