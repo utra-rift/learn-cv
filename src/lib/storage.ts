@@ -71,11 +71,11 @@ export const storage = {
 	isInstructor: (): boolean => read("instructor", false),
 	setInstructor: (on: boolean) => write("instructor", on ? true : undefined),
 
-	/** The Arena (dark) theme, for projectors. */
 	/** The "bring a laptop" banner on phones and tablets, once closed. */
 	isMobileWarningDismissed: (): boolean => read("mobile-warning", false),
 	dismissMobileWarning: () => write("mobile-warning", true),
 
+	/** The Arena (dark) theme, for projectors. */
 	isProjector: (): boolean => read("projector", false),
 	setProjector: (on: boolean) => write("projector", on ? true : undefined),
 
@@ -97,6 +97,18 @@ export const storage = {
 	isDownloaded: (): boolean => read("downloaded", "") === TOOLCHAIN_KEY,
 	markDownloaded() {
 		if (!storage.isDownloaded()) write("downloaded", TOOLCHAIN_KEY);
+	},
+
+	/** The dev tools button, toggled with the Konami code. */
+	isDev: (): boolean => read("dev", false),
+	setDev: (on: boolean) => write("dev", on ? true : undefined),
+
+	/** Marks these levels passed, without any passing code. For testing. */
+	passAll(levels: number[]) {
+		const progress = storage.getProgress();
+		const passedAt = new Date().toISOString();
+		for (const level of levels) progress[level] ??= { passedAt };
+		write("progress", progress);
 	},
 
 	/** Clears passed levels, saved code, steps and hints. Settings stay. */
