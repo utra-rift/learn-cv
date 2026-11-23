@@ -103,12 +103,28 @@ export const storage = {
 	isDev: (): boolean => read("dev", false),
 	setDev: (on: boolean) => write("dev", on ? true : undefined),
 
-	/** Marks these levels passed, without any passing code. For testing. */
-	passAll(levels: number[]) {
+	/**
+	 * Bumped when code changes outside the editor (pass all, reset), so an open
+	 * editor reloads its level's code.
+	 */
+	getCodeRevision: (): number => read("code-rev", 0),
+
+	/**
+	 * Marks these levels passed with their answers: the answer becomes the
+	 * passing code (what the next level carries on from) and the editor's code,
+	 * and every step is ticked. For testing.
+	 */
+	passAll(levels: { number: number; solution: string; steps: number }[]) {
 		const progress = storage.getProgress();
 		const passedAt = new Date().toISOString();
-		for (const level of levels) progress[level] ??= { passedAt };
-		write("progress", progress);
+		for (const level of levels) {
+			progress[level.number] ??= { passedAt };
+			write(`passed:${level.number}`, level.solution, true);
+			write(`code:${level.number}`, level.solution, true);
+			write(`step:${level.number}`, level.steps, true);
+		}
+		write("progress", progress, true);
+		write("code-rev", storage.getCodeRevision() + 1);
 	},
 
 	/** Clears passed levels, saved code, steps and hints. Settings stay. */
@@ -120,7 +136,7 @@ export const storage = {
 			)
 				localStorage.removeItem(key);
 		}
-		notify();
+		write("code-rev", storage.getCodeRevision() + 1);
 	},
 };
 

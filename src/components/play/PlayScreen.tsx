@@ -102,7 +102,15 @@ export function PlayScreen({
 	const [code, setCode] = useState(
 		() => shared.current ?? storage.getCode(storageKey) ?? starter,
 	);
+	const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+		undefined,
+	);
+	// Dev tools' pass all and reset change saved code; reload it when they do.
+	const codeRevision = useStored(storage.getCodeRevision, 0);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: codeRevision only triggers a reload
 	useEffect(() => {
+		// A save still waiting would write the old text back.
+		clearTimeout(saveTimer.current);
 		if (shared.current) {
 			storage.setCode(storageKey, shared.current);
 			shared.current = null;
@@ -110,11 +118,8 @@ export function PlayScreen({
 			return;
 		}
 		setCode(storage.getCode(storageKey) ?? starter);
-	}, [storageKey, starter]);
+	}, [storageKey, starter, codeRevision]);
 
-	const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
-		undefined,
-	);
 	const updateCode = useCallback(
 		(value: string) => {
 			setCode(value);

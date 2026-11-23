@@ -154,8 +154,15 @@ function DevPanel() {
 						variant="outline"
 						size="sm"
 						className="px-2"
-						disabled={passed === LEVELS.length}
-						onClick={() => storage.passAll(LEVELS.map((level) => level.number))}
+						onClick={() =>
+							storage.passAll(
+								LEVELS.map((level) => ({
+									number: level.number,
+									solution: level.solution,
+									steps: level.steps.length,
+								})),
+							)
+						}
 					>
 						Pass all
 					</Button>
@@ -173,7 +180,8 @@ function DevPanel() {
 					</Button>
 				</div>
 				<span className="type-body-sm text-[12px] text-ink-muted">
-					Reset clears passed levels, saved code, steps, hints and sliders.
+					Pass all loads every level's answer into its editor. Reset clears
+					passed levels, saved code, steps, hints and sliders.
 				</span>
 			</div>
 
