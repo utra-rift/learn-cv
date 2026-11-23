@@ -387,19 +387,48 @@ def draw_hand(img, cx, cy, count, tone, tilt):
         cv2.line(img, P(22, 6), P(30, -6), col, 14, cv2.LINE_AA)    # thumb tucked in
     cv2.ellipse(img, P(0, -4), (34, 33), tilt, 0, 360, col, -1, cv2.LINE_AA)
 
-def clip_hand(name, seed, tone, counts, wall_tone):
+# Level 6 looks for the hand only inside this box (x0, y0, x1, y1), so the
+# student moving in their seat doesn't count. Same numbers as BOX in the level.
+HAND_BOX = (170, 10, 310, 210)
+
+def draw_person(img, cx, cy, tone, shirt):
+    """The student, left of the box: shoulders, neck and head."""
+    col = SKIN[tone]
+    torso = np.array([(cx - 62, H), (cx - 58, cy + 82), (cx - 20, cy + 64),
+                      (cx + 20, cy + 64), (cx + 58, cy + 82), (cx + 62, H)], np.int32)
+    # A checked shirt: real clothes have folds and patterns, so when you move,
+    # all of you changes, not just your outline.
+    shirt_img = np.zeros_like(img)
+    cv2.fillPoly(shirt_img, [torso], (1, 1, 1))
+    yy, xx = np.mgrid[0:H, 0:W]
+    check = (((xx - int(cx)) // 10 + (yy - int(cy)) // 10) % 2)[:, :, None]
+    pattern = np.where(check, np.array(shirt, np.float32), np.array(shirt, np.float32) * 0.55)
+    img[:] = np.where(shirt_img > 0, pattern, img)
+    cv2.rectangle(img, (int(cx - 12), int(cy + 30)), (int(cx + 12), int(cy + 70)), col, -1)
+    cv2.ellipse(img, (int(cx), int(cy)), (34, 44), 0, 0, 360, col, -1, cv2.LINE_AA)
+    cv2.ellipse(img, (int(cx), int(cy - 16)), (36, 32), 0, 180, 360, (40, 42, 48), -1, cv2.LINE_AA)
+
+def clip_hand(name, seed, tone, counts, wall_tone, shirt):
     c = Clip(name, seed, 0)
     bg = plain_wall(c.rng, wall_tone)
     c.extra["keys"] = {"4": "b"}
     hold = 16
-    for i in range(10):          # the empty background, for pressing b
-        c.add(bg.copy(), {"v": False, "x": 0, "y": 0, "r": 0, "fingers": None})
+    def person(img, t):
+        # Nobody sits still: the student sways the whole time, even while
+        # b saves the background.
+        draw_person(img, 80 + 16 * math.sin(t / 9), 100 + 7 * math.sin(t / 6), tone, shirt)
+    for i in range(10):          # the hand out of the box, for pressing b
+        img = bg.copy()
+        person(img, i)
+        c.add(img, {"v": False, "x": 0, "y": 0, "r": 0, "fingers": None})
     for j, n in enumerate(counts):
         for k in range(hold):
+            t = 10 + j * hold + k
             img = bg.copy()
-            cx = 160 + 30 * math.sin((j * hold + k) / 13)
-            cy = 150 + 6 * math.sin((j * hold + k) / 7)
-            tilt = 8 * math.sin((j * hold + k) / 11)
+            person(img, t)
+            cx = 233 + 4 * math.sin((j * hold + k) / 13)
+            cy = 118 + 4 * math.sin((j * hold + k) / 7)
+            tilt = 5 * math.sin((j * hold + k) / 11)
             draw_hand(img, cx, cy, n, tone, tilt)
             # The first two frames after a change are motion blur in a real
             # recording; they aren't graded.
@@ -439,9 +468,9 @@ CLIPS = {
     "note-fingers": clip_note_fingers,
     "occlusion": clip_occlusion,
     "throw": clip_throw,
-    "hand-light": lambda: clip_hand("hand-light", 501, "light", [0, 1, 2, 3, 4, 5], (168, 150, 132)),
-    "hand-medium": lambda: clip_hand("hand-medium", 502, "medium", [5, 3, 1, 4, 0, 2], (176, 150, 134)),
-    "hand-dark": lambda: clip_hand("hand-dark", 503, "dark", [2, 4, 0, 5, 1, 3], (150, 170, 190)),
+    "hand-light": lambda: clip_hand("hand-light", 501, "light", [0, 1, 2, 3, 4, 5], (168, 150, 132), (120, 70, 40)),
+    "hand-medium": lambda: clip_hand("hand-medium", 502, "medium", [5, 3, 1, 4, 0, 2], (176, 150, 134), (60, 60, 150)),
+    "hand-dark": lambda: clip_hand("hand-dark", 503, "dark", [2, 4, 0, 5, 1, 3], (150, 170, 190), (70, 110, 60)),
     "armor": clip_armor,
 }
 CLIP_NAMES = list(CLIPS)

@@ -465,6 +465,10 @@ import numpy as np
 
 cap = cv2.VideoCapture(0)
 CYAN = (226, 198, 77)
+# Only look for your hand inside this box: x0, y0, x1, y1 in pixels. You're
+# in the picture too, and when you move, that's a change as well. Sit so your
+# head is outside the box.
+BOX = (170, 10, 310, 210)
 background = None
 fingers = None
 hand = None
@@ -485,7 +489,11 @@ while True:
     ok, frame = cap.read()
     if not ok:
         break
-    blur = cv2.GaussianBlur(frame, (5, 5), 0)
+    # Cut the box out of the frame (rows first, like level 2). It's a view,
+    # not a copy: drawing on box draws on frame.
+    x0, y0, x1, y1 = BOX
+    box = frame[y0:y1, x0:x1]
+    blur = cv2.GaussianBlur(box, (5, 5), 0)
     fingers = None
 
     if background is not None:
@@ -510,7 +518,7 @@ while True:
                         # STEP 4: count only deep, sharp dents: the valleys between fingers.
                         # if depth / 256 > 20 and angle_at(far, start, end) < 90:
                         #     valleys += 1
-                        #     cv2.circle(frame, (int(far[0]), int(far[1])), 4, CYAN, -1)
+                        #     cv2.circle(box, (int(far[0]), int(far[1])), 4, CYAN, -1)
                 if valleys > 0:
                     fingers = valleys   # STEP 5: two fingers have one valley between them
                 else:
@@ -520,17 +528,18 @@ while True:
                     _, radius, _, palm = cv2.minMaxLoc(dist)
                     top = c[c[:, :, 1].argmin()][0]
                     fingers = 1 if palm[1] - top[1] > 1.5 * radius else 0
-                cv2.drawContours(frame, [cv2.convexHull(c)], -1, CYAN, 1)
+                cv2.drawContours(box, [cv2.convexHull(c)], -1, CYAN, 1)
         cv2.putText(frame, str(fingers), (12, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, CYAN, 2)
 
+    cv2.rectangle(frame, (x0 - 1, y0 - 1), (x1, y1), CYAN, 1)
     cv2.imshow("camera", frame)
     if hand is not None:
         cv2.imshow("hand", hand)
-    # STEP 1: point the camera at a plain wall, move your hand out of view
-    #         and press b. Then hold up your hand.
+    # STEP 1: sit so your head is left of the box, keep your hand out of it
+    #         and press b. Then hold up your hand inside the box.
     key = cv2.waitKey(1) & 0xFF
     if key == ord("b"):
-        background = blur.copy()   # b saves the empty background
+        background = blur.copy()   # b saves the empty box
     if key == ord("q") or key == 27:
         break
 
@@ -543,7 +552,11 @@ while True:
     ok, frame = cap.read()
     if not ok:
         break
-    blur = cv2.GaussianBlur(frame, (5, 5), 0)
+    # Cut the box out of the frame (rows first, like level 2). It's a view,
+    # not a copy: drawing on box draws on frame.
+    x0, y0, x1, y1 = BOX
+    box = frame[y0:y1, x0:x1]
+    blur = cv2.GaussianBlur(box, (5, 5), 0)
     fingers = None
 
     if background is not None:
@@ -567,7 +580,7 @@ while True:
                         start, end, far = c[s][0], c[e][0], c[f][0]
                         if depth / 256 > 20 and angle_at(far, start, end) < 90:
                             valleys += 1
-                            cv2.circle(frame, (int(far[0]), int(far[1])), 4, CYAN, -1)
+                            cv2.circle(box, (int(far[0]), int(far[1])), 4, CYAN, -1)
                 if valleys > 0:
                     fingers = valleys + 1
                 else:
@@ -577,15 +590,16 @@ while True:
                     _, radius, _, palm = cv2.minMaxLoc(dist)
                     top = c[c[:, :, 1].argmin()][0]
                     fingers = 1 if palm[1] - top[1] > 1.5 * radius else 0
-                cv2.drawContours(frame, [cv2.convexHull(c)], -1, CYAN, 1)
+                cv2.drawContours(box, [cv2.convexHull(c)], -1, CYAN, 1)
         cv2.putText(frame, str(fingers), (12, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, CYAN, 2)
 
+    cv2.rectangle(frame, (x0 - 1, y0 - 1), (x1, y1), CYAN, 1)
     cv2.imshow("camera", frame)
     if hand is not None:
         cv2.imshow("hand", hand)
     key = cv2.waitKey(1) & 0xFF
     if key == ord("b"):
-        background = blur.copy()   # b saves the empty background
+        background = blur.copy()   # b saves the empty box
     if key == ord("q") or key == 27:
         break
 
@@ -1012,10 +1026,14 @@ function measureFingers(run: ClipRun, labels: ClipLabels): ClipResult {
 			.filter((x) => !Number.isNaN(x)),
 	);
 	const skin = run.clip.replace("hand-", "");
+	const wholeFrame = frames(run, labels).some((f) => mask(f.rec.hand)?.whole);
 	let coach: string;
 	if (unset > graded.length / 2) {
 		coach =
 			"`fingers` stays None. It's only set once there's a background: Check presses `b` on frame 4, so save the background when `waitKey` returns `ord(\"b\")`.";
+	} else if (wholeFrame) {
+		coach =
+			"`hand` covers the whole frame, so the person moving in their seat counts as a change too. Look only inside the box: `box = frame[y0:y1, x0:x1]`, then blur `box`, not `frame`.";
 	} else if (handFill < 0.02) {
 		coach = `The hand mask is nearly empty on the ${skin} skin clip: that hand is as bright as the wall, so a greyscale difference can't see it. Take the difference in colour, then \`.max(axis=2)\`.`;
 	} else {
@@ -1580,12 +1598,24 @@ export const LEVELS: Level[] = [
 		number: 6,
 		title: "Count fingers",
 		minutes: 9,
-		idea: "No colour this time. Press `b` with the camera on an empty background, and anything that's changed since is your hand, whatever your skin tone. Around the hand's outline, the **convex hull** is a rubber band stretched over it; the **convexity defects** are the deepest points between hull and outline, which are the valleys between raised fingers.",
-		goal: "Set `fingers` to how many fingers are up, 0 to 5. Keep the camera still and the wall behind your hand plain. Check presses `b` on its own.",
+		idea: "No colour this time. Press `b` while the box on screen is empty, and anything that's changed in the box since is your hand, whatever your skin tone. Only the box counts, because you're in the picture too: when you shift in your seat, that changes pixels as well. Around the hand's outline, the **convex hull** is a rubber band stretched over it; the **convexity defects** are the deepest points between hull and outline, which are the valleys between raised fingers.",
+		goal: "Set `fingers` to how many fingers are up, 0 to 5, from your hand in the box. Keep the laptop still and your head out of the box. Check presses `b` on its own.",
 		steps: [
 			{
-				title: "Save the background",
-				body: "Run it, point the camera at a plain wall, move out of view and press **b** (click a window first so it gets the key). Then hold up your hand.",
+				title: "Save the empty box",
+				body: "Run it. The cyan box on the `camera` window is where your hand goes: sit so your head is outside it, keep your hand out of it, and press **b** (click a window first so it gets the key). Then hold your hand up inside the box.",
+				images: [
+					{
+						src: "/figures/fingers-whole.png",
+						alt: "The difference over the whole frame: the hand in white, and the outline of the person's head and shoulders in white too, because they moved.",
+						caption: "the whole frame: you moved too",
+					},
+					{
+						src: "/figures/fingers-box.jpg",
+						alt: "The camera with a cyan box on the right; the person sits to the left of it and holds a hand up inside it.",
+						caption: "so only look in the box",
+					},
+				],
 			},
 			{
 				title: "Find the hand",
@@ -1593,17 +1623,17 @@ export const LEVELS: Level[] = [
 				images: [
 					{
 						src: "/figures/fingers-background.jpg",
-						alt: "An empty plain wall: the background saved with b.",
+						alt: "The empty box: a patch of plain wall, saved with b.",
 						caption: "saved with b",
 					},
 					{
 						src: "/figures/fingers-camera.jpg",
-						alt: "The same wall with a hand held up, four fingers raised.",
+						alt: "The same box with a hand held up, four fingers raised.",
 						caption: "now",
 					},
 					{
 						src: "/figures/fingers-hand.png",
-						alt: "The difference mask: the hand and arm in white, everything else black.",
+						alt: "The difference mask of the box: the hand and arm in white, everything else black.",
 						caption: "what changed: the hand",
 					},
 				],
@@ -1634,8 +1664,9 @@ export const LEVELS: Level[] = [
 		],
 		presenter: [
 			"Why not threshold skin colour? It depends on the skin tone and the light. Background difference works the same for everyone, as long as the camera doesn't move.",
+			"Why the box: a laptop camera sees the student too, and nobody sits still, so a difference over the whole frame lights up their head and shoulders. The box is a numpy slice, `frame[y0:y1, x0:x1]`, rows first, the same indexing as level 2. To use the other side of the frame, change `BOX`, for example to `(10, 10, 150, 210)`.",
 			"Show the hull as a rubber band around the hand, and a defect as the deepest point of each gap under the band.",
-			"If someone's count jumps around: a busy background, a moving camera, or their sleeve. Press b again.",
+			"If someone's count jumps around: their head or shoulder is in the box, a busy background behind the box, a moving laptop, or their sleeve. Press b again with the box empty.",
 		],
 		hints: [
 			"```\ndiff = cv2.absdiff(blur, background).max(axis=2)\n_, hand = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)\n```\nThen open and close it, and take the biggest contour, as in level 4.",
@@ -1654,6 +1685,11 @@ export const LEVELS: Level[] = [
 					"diff = cv2.absdiff(cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY), cv2.cvtColor(background, cv2.COLOR_BGR2GRAY))",
 				),
 				expect: /colour/,
+			},
+			{
+				name: "the whole frame, no box",
+				code: L4_SOLUTION.replace("box = frame[y0:y1, x0:x1]", "box = frame"),
+				expect: /person moving/,
 			},
 			{
 				name: "valleys, not fingers",

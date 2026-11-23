@@ -387,10 +387,14 @@ def _mask(v, i, full):
         return "bad:" + type(v).__name__
     m = v[:, :, 0] if v.ndim == 3 and v.shape[2] == 1 else v
     h, w = S.clip["height"], S.clip["width"]
-    if m.ndim != 2 or m.shape != (h, w):
+    # A fill-only mask can be any size (level 6 looks inside a box); one
+    # compared with the answer has to be the whole frame.
+    if m.ndim != 2 or (full and m.shape != (h, w)):
         return "bad:shape " + "x".join(map(str, v.shape))
     on = m > 0
     out = {"fill": round(float(on.mean()), 4)}
+    if not full:
+        out["whole"] = m.shape == (h, w)
     if full:
         gt = _gt_mask(i) > 0
         inter = int(np.count_nonzero(on & gt))

@@ -48,7 +48,13 @@ export interface SyntaxIssue {
 	message: string;
 }
 
-export type MaskRecord = { fill: number; iou?: number; cover?: number | null };
+export type MaskRecord = {
+	fill: number;
+	iou?: number;
+	cover?: number | null;
+	/** For a fill-only mask: it's the size of the whole frame. */
+	whole?: boolean;
+};
 /** How a `gray` image compares with OpenCV's own greyscale of the frame. */
 export type GrayRecord = {
 	ok: boolean;

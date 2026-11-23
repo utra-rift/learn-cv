@@ -16,7 +16,7 @@ bun dev           # http://localhost:3000
 `bun dev` (and `bun run build`) first runs `scripts/sync-tools.ts`, which fills two gitignored folders in `public/`:
 
 - `public/tools/pyodide/314.0.7/`: Pyodide from npm, plus the NumPy 2.4.6 and OpenCV 4.11.0.86 wheels downloaded once from Pyodide's CDN and checked against the sha256 in `pyodide-lock.json`.
-- `public/clips/v1/`: the Check-mode clips, rendered by `scripts/make-clips.ts`.
+- `public/clips/v2/`: the Check-mode clips, rendered by `scripts/make-clips.ts`.
 
 They're ordinary static files: the dev server serves them at `/tools` and `/clips`, and in production they're Worker static assets at the same paths. The dev server runs the app in workerd through Cloudflare's Vite plugin, like production.
 

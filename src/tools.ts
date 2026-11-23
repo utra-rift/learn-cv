@@ -7,7 +7,7 @@ export const PYODIDE_VERSION = "314.0.7";
 /** Pyodide packages loaded at boot, from pyodide-lock.json. */
 export const PACKAGES = ["numpy", "opencv-python"] as const;
 /** Bump when the clips or their labels change. */
-export const CLIPS_VERSION = "v1";
+export const CLIPS_VERSION = "v2";
 
 export const TOOLS = {
 	pyodide: {

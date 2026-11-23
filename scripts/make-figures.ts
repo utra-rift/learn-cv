@@ -313,39 +313,60 @@ def angle_at(far, start, end):
     c = np.linalg.norm(end - far)
     return math.degrees(math.acos(np.clip((b * b + c * c - a * a) / (2 * b * c + 1e-9), -1, 1)))
 
+BOX = (170, 10, 310, 210)   # the level's BOX: x0, y0, x1, y1
+
+def clean(diff):
+    _, m = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
+    m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+    return cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
+
 def fingers():
     clip = "hand-light"
     lab = labels(clip)["frames"]
-    i = next(k for k, l in enumerate(lab) if l.get("fingers") == 4) + 6
+    # Four fingers up, on the frame where the person has moved furthest from
+    # where they sat when b was pressed (frame 4). Same sway as make-clips.
+    def moved(t):
+        return abs(16 * (math.sin(t / 9) - math.sin(4 / 9))) + abs(7 * (math.sin(t / 6) - math.sin(4 / 6)))
+    i = max((k for k, l in enumerate(lab) if l.get("fingers") == 4), key=moved)
     bg = frame(clip, 4)
     img = frame(clip, i)
+    x0, y0, x1, y1 = BOX
     blur_bg = cv2.GaussianBlur(bg, (5, 5), 0)
     blur = cv2.GaussianBlur(img, (5, 5), 0)
-    diff = cv2.absdiff(blur, blur_bg).max(axis=2)
-    _, hand = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
-    hand = cv2.morphologyEx(hand, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
-    hand = cv2.morphologyEx(hand, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
-    save("fingers-background.jpg", bg)
-    save("fingers-camera.jpg", img)
+
+    # Over the whole frame, the person who moved shows up too.
+    save("fingers-whole.png", clean(cv2.absdiff(blur, blur_bg).max(axis=2)))
+    boxed = img.copy()
+    cv2.rectangle(boxed, (x0 - 1, y0 - 1), (x1, y1), CYAN, 1)
+    save("fingers-box.jpg", boxed)
+
+    # The level's way: only the box.
+    box_bg = cv2.GaussianBlur(bg[y0:y1, x0:x1], (5, 5), 0)
+    box_now = cv2.GaussianBlur(img[y0:y1, x0:x1], (5, 5), 0)
+    hand = clean(cv2.absdiff(box_now, box_bg).max(axis=2))
+    save("fingers-background.jpg", bg[y0:y1, x0:x1].copy())
+    save("fingers-camera.jpg", img[y0:y1, x0:x1].copy())
     save("fingers-hand.png", hand)
 
     contours, _ = cv2.findContours(hand, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     c = max(contours, key=cv2.contourArea)
     out = img.copy()
+    box = out[y0:y1, x0:x1]
     # Drawn the way the level 6 answer draws them: a thin cyan hull and a
-    # cyan dot in each valley. The lines to the fingertips are extra.
-    cv2.drawContours(out, [cv2.convexHull(c)], -1, CYAN, 1, cv2.LINE_AA)
+    # cyan dot in each valley, inside the box. The lines to the fingertips are extra.
+    cv2.drawContours(box, [cv2.convexHull(c)], -1, CYAN, 1, cv2.LINE_AA)
     defects = cv2.convexityDefects(c, cv2.convexHull(c, returnPoints=False))
     valleys = 0
     for s, e, f, depth in defects[:, 0]:
         start, end, far = c[s][0], c[e][0], c[f][0]
         if depth / 256 > 20 and angle_at(far, start, end) < 90:
             valleys += 1
-            cv2.line(out, tuple(int(v) for v in start), tuple(int(v) for v in far), MUTED, 1, cv2.LINE_AA)
-            cv2.line(out, tuple(int(v) for v in end), tuple(int(v) for v in far), MUTED, 1, cv2.LINE_AA)
-            cv2.circle(out, tuple(int(v) for v in far), 4, CYAN, -1, cv2.LINE_AA)
+            cv2.line(box, tuple(int(v) for v in start), tuple(int(v) for v in far), MUTED, 1, cv2.LINE_AA)
+            cv2.line(box, tuple(int(v) for v in end), tuple(int(v) for v in far), MUTED, 1, cv2.LINE_AA)
+            cv2.circle(box, tuple(int(v) for v in far), 4, CYAN, -1, cv2.LINE_AA)
+    cv2.rectangle(out, (x0 - 1, y0 - 1), (x1, y1), CYAN, 1)
     label(out, f"{valleys} valleys + 1 = {valleys + 1} fingers", (10, 24), INK, 0.5)
-    label(out, "hull", (12, 230), CYAN, 0.45)
+    label(out, "hull", (x0 + 6, y1 - 8), CYAN, 0.45)
     save("fingers-defects.jpg", out)
 
 # ------------------------------------------------- level 7: armor
